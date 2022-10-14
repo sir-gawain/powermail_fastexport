@@ -6,6 +6,8 @@ use Bithost\PowermailFastexport\Domain\Repository\AnswerRepository;
 use Bithost\PowermailFastexport\Domain\Repository\MailRepository;
 use Bithost\PowermailFastexport\Exporter\CsvExporter;
 use Bithost\PowermailFastexport\Exporter\XlsExporter;
+use In2code\Powermail\Domain\Repository\FormRepository;
+use Psr\Http\Message\ResponseInterface;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use In2code\Powermail\Utility\StringUtility;
 use TYPO3\CMS\Fluid\Core\Rendering\RenderingContext;
@@ -41,27 +43,32 @@ use TYPO3\CMS\Fluid\Core\Rendering\RenderingContext;
  */
 class ModuleController extends \In2code\Powermail\Controller\ModuleController
 {
+    protected string $fileNameFromTitle = '';
+
     /**
      * Export Action for XLS Files
      *
-     * @return String
+     * @return ResponseInterface
      */
-    public function exportXlsAction(): void
+    public function exportXlsAction(): ResponseInterface
     {
 
         $mails = $this->getMailsAsArray();
-        /** @var \Bithost\PowermailFastexport\Exporter\XlsExporter $xlsExporter */
+        /** @var XlsExporter $xlsExporter */
         $xlsExporter = GeneralUtility::makeInstance(XlsExporter::class, $this->objectManager, new RenderingContext());
         $fieldUids = GeneralUtility::trimExplode(
             ',',
             StringUtility::conditionalVariable($this->piVars['export']['fields'], ''),
             true
         );
-        $fileName = StringUtility::conditionalVariable($this->settings['export']['filenameXls'], 'export.xls');
+        $configuredFilename = StringUtility::conditionalVariable($this->settings['export']['filenameXls'], 'export.xls');
+        $fileName = StringUtility::conditionalVariable($this->fileNameFromTitle .'.xls', $configuredFilename);
 
         header('Content-Type: application/vnd.ms-excel');
         header('Content-Disposition: inline; filename="' . $fileName . '"');
         header('Pragma: no-cache');
+
+        $this->setFileNameFromFormTitle($mails);
 
         $this->response->appendContent($xlsExporter->export($mails, $fieldUids));
     }
@@ -71,7 +78,7 @@ class ModuleController extends \In2code\Powermail\Controller\ModuleController
      *
      * @return array
      */
-    private function getMailsAsArray()
+    private function getMailsAsArray(): array
     {
         if (!empty($this->settings['maxExecutionTime'])) {
             ini_set('max_execution_time', (int)$this->settings['maxExecutionTime']);
@@ -81,7 +88,7 @@ class ModuleController extends \In2code\Powermail\Controller\ModuleController
         }
 
         /** @var MailRepository $mailRepository */
-        $mailRepository = $this->objectManager->get(MailRepository::class);
+        $mailRepository = GeneralUtility::makeInstance(MailRepository::class, $this->objectManager);
         $dbMails = $mailRepository->findAllInPidRaw($this->id, $this->settings, $this->piVars);
         $mails = [];
 
@@ -90,7 +97,7 @@ class ModuleController extends \In2code\Powermail\Controller\ModuleController
         }
 
         /** @var AnswerRepository $answerRepository */
-        $answerRepository = $this->objectManager->get(AnswerRepository::class);
+        $answerRepository = GeneralUtility::makeInstance(AnswerRepository::class);
         $answers = $answerRepository->findByMailUidsRaw(array_keys($mails));
 
         foreach ($answers as $answer) {
@@ -106,25 +113,51 @@ class ModuleController extends \In2code\Powermail\Controller\ModuleController
     /**
      * Export Action for CSV Files
      *
-     * @return String
+     * @return ResponseInterface
      */
-    public function exportCsvAction(): void
+    public function exportCsvAction(): ResponseInterface
     {
         $mails = $this->getMailsAsArray();
-        /** @var \Bithost\PowermailFastexport\Exporter\CsvExporter $csvExporter */
+        /** @var CsvExporter $csvExporter */
         $csvExporter = GeneralUtility::makeInstance(CsvExporter::class, $this->objectManager, new RenderingContext());
         $fieldUids = GeneralUtility::trimExplode(
             ',',
             StringUtility::conditionalVariable($this->piVars['export']['fields'], ''),
             true
         );
-        $fileName = StringUtility::conditionalVariable($this->settings['export']['filenameCsv'], 'export.csv');
+        $configuredFilename = StringUtility::conditionalVariable($this->settings['export']['filenameCsv'], 'export.csv');
+        $fileName = StringUtility::conditionalVariable($this->fileNameFromTitle .'.csv', $configuredFilename);
 
         header('Content-Type: text/x-csv');
         header('Content-Disposition: attachment; filename="' . $fileName . '"');
         header('Pragma: no-cache');
 
+        $this->setFileNameFromFormTitle($mails);
+
         $this->response->appendContent($csvExporter->export($mails, $fieldUids));
     }
 
+    /**
+     * generate filename (without extension) from form title of first email
+     *
+     * @param $mails
+     */
+    public function setFileNameFromFormTitle($mails) {
+
+        $firstMail = reset($mails);
+        $formID = $firstMail['form'] ?? null;
+        $formTitle = '';
+
+        if($formID !== null) {
+            /** @var FormRepository $formRepository */
+            $formRepository = GeneralUtility::makeInstance(FormRepository::class);
+            $form = $formRepository->findByUid($formID);
+            $formTitle = $form->getTitle();
+            // clean filename
+            $formTitle = preg_replace(array('/\s/', '/\.[\.]+/', '/[^\w_\.\-]/'), array('_', '.', ''), $formTitle);
+            //debug($this->$formTitle,'$formTitle');
+
+        }
+        $this->fileNameFromTitle = $formTitle;
+    }
 }

@@ -40,8 +40,8 @@ class XlsExporter extends AbstractExporter
 	 *
 	 * @return string
 	 */
-	public function export(array &$mails, array $fieldUids)
-	{
+	public function export(array &$mails, array $fieldUids): string
+    {
 		return '
             <html>
                 <head>
@@ -64,8 +64,8 @@ class XlsExporter extends AbstractExporter
 	 *
 	 * @return string
 	 */
-	protected function renderMails(array &$mails, array $fieldUids)
-	{
+	protected function renderMails(array &$mails, array $fieldUids): string
+    {
 		$result = $this->renderHeader($fieldUids);
 
 		foreach ($mails as $mail) {
@@ -80,8 +80,8 @@ class XlsExporter extends AbstractExporter
 	 * @param array $fieldUids
 	 * @return string
 	 */
-	protected function renderRecord(array &$mail, array $fieldUids)
-	{
+	protected function renderRecord(array &$mail, array $fieldUids): string
+    {
 		$result = '<tr>';
 
 		foreach ($fieldUids as $fieldUid) {
@@ -104,8 +104,8 @@ class XlsExporter extends AbstractExporter
 	 *
 	 * @return string
 	 */
-	protected function renderHeader(array $fieldUids)
-	{
+	protected function renderHeader(array $fieldUids): string
+    {
 		$result = '<tr>';
 
 		foreach ($fieldUids as $fieldUid) {
