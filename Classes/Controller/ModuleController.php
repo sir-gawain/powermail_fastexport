@@ -6,7 +6,6 @@ use Bithost\PowermailFastexport\Domain\Repository\AnswerRepository;
 use Bithost\PowermailFastexport\Domain\Repository\MailRepository;
 use Bithost\PowermailFastexport\Exporter\CsvExporter;
 use Bithost\PowermailFastexport\Exporter\XlsExporter;
-use In2code\Powermail\Domain\Repository\FormRepository;
 use Psr\Http\Message\ResponseInterface;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use In2code\Powermail\Utility\StringUtility;
@@ -43,8 +42,6 @@ use TYPO3\CMS\Fluid\Core\Rendering\RenderingContext;
  */
 class ModuleController extends \In2code\Powermail\Controller\ModuleController
 {
-    protected string $fileNameFromTitle = '';
-
     /**
      * Export Action for XLS Files
      *
@@ -61,14 +58,11 @@ class ModuleController extends \In2code\Powermail\Controller\ModuleController
             StringUtility::conditionalVariable($this->piVars['export']['fields'], ''),
             true
         );
-        $configuredFilename = StringUtility::conditionalVariable($this->settings['export']['filenameXls'], 'export.xls');
-        $fileName = StringUtility::conditionalVariable($this->fileNameFromTitle .'.xls', $configuredFilename);
+        $fileName = StringUtility::conditionalVariable($this->settings['export']['filenameXls'], 'export.xls');
 
         header('Content-Type: application/vnd.ms-excel');
         header('Content-Disposition: inline; filename="' . $fileName . '"');
         header('Pragma: no-cache');
-
-        $this->setFileNameFromFormTitle($mails);
 
         $this->response->appendContent($xlsExporter->export($mails, $fieldUids));
     }
@@ -125,39 +119,12 @@ class ModuleController extends \In2code\Powermail\Controller\ModuleController
             StringUtility::conditionalVariable($this->piVars['export']['fields'], ''),
             true
         );
-        $configuredFilename = StringUtility::conditionalVariable($this->settings['export']['filenameCsv'], 'export.csv');
-        $fileName = StringUtility::conditionalVariable($this->fileNameFromTitle .'.csv', $configuredFilename);
+        $fileName = StringUtility::conditionalVariable($this->settings['export']['filenameCsv'], 'export.csv');
 
         header('Content-Type: text/x-csv');
         header('Content-Disposition: attachment; filename="' . $fileName . '"');
         header('Pragma: no-cache');
 
-        $this->setFileNameFromFormTitle($mails);
-
         $this->response->appendContent($csvExporter->export($mails, $fieldUids));
-    }
-
-    /**
-     * generate filename (without extension) from form title of first email
-     *
-     * @param $mails
-     */
-    public function setFileNameFromFormTitle($mails) {
-
-        $firstMail = reset($mails);
-        $formID = $firstMail['form'] ?? null;
-        $formTitle = '';
-
-        if($formID !== null) {
-            /** @var FormRepository $formRepository */
-            $formRepository = GeneralUtility::makeInstance(FormRepository::class);
-            $form = $formRepository->findByUid($formID);
-            $formTitle = $form->getTitle();
-            // clean filename
-            $formTitle = preg_replace(array('/\s/', '/\.[\.]+/', '/[^\w_\.\-]/'), array('_', '.', ''), $formTitle);
-            //debug($this->$formTitle,'$formTitle');
-
-        }
-        $this->fileNameFromTitle = $formTitle;
     }
 }
