@@ -63,7 +63,7 @@ class CsvExporter extends AbstractExporter
      */
     protected function renderRecord(array &$mail, array $fieldUids): array
     {
-        $data = array();
+        $data = [];
 
         foreach ($fieldUids as $fieldUid) {
             $data[] = $this->renderRecordFieldContent($mail, $fieldUid);

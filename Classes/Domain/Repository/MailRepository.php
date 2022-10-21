@@ -51,9 +51,9 @@ class MailRepository extends \In2code\Powermail\Domain\Repository\MailRepository
      * @param int $pid
      * @param array $settings TypoScript Config Array
      * @param array $piVars Plugin Variables
-     * @return QueryResult
+     * @return array
      */
-    public function findAllInPidRaw(int $pid = 0, array $settings = [], array $piVars = []): QueryResult
+    public function findAllInPidRaw(int $pid = 0, array $settings = [], array $piVars = []): array
     {
         $query = $this->createQuery();
         $query->getQuerySettings()->setIgnoreEnableFields(true);
