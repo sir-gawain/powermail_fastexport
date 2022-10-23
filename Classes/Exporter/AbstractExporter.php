@@ -108,12 +108,12 @@ abstract class AbstractExporter
 	}
 
 	/**
-	 * @param array $mail
-	 * @param $fieldUid
-	 * @return string
-	 * @throws \TYPO3\CMS\Fluid\Core\ViewHelper\Exception
-	 */
-	protected function renderRecordFieldContent(array &$mail, $fieldUid)
+  * @param array $mail
+  * @param $fieldUid
+  * @return string
+  * @throws \TYPO3Fluid\Fluid\Core\ViewHelper\Exception
+  */
+ protected function renderRecordFieldContent(array &$mail, $fieldUid)
 	{
 		$result = '';
 

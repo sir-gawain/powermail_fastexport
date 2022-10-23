@@ -2,6 +2,7 @@
 
 namespace Bithost\PowermailFastexport\Domain\Repository;
 
+use TYPO3\CMS\Extbase\Object\ObjectManagerInterface;
 use In2code\Powermail\Domain\Model\Mail;
 use TYPO3\CMS\Extbase\Persistence\Generic\QueryResult;
 
@@ -38,7 +39,7 @@ class MailRepository extends \In2code\Powermail\Domain\Repository\MailRepository
      *
      * @param \TYPO3\CMS\Extbase\Object\ObjectManagerInterface $objectManager
      */
-    public function __construct(\TYPO3\CMS\Extbase\Object\ObjectManagerInterface $objectManager)
+    public function __construct(ObjectManagerInterface $objectManager)
     {
         parent::__construct($objectManager);
         $this->objectType = Mail::class;
@@ -50,9 +51,9 @@ class MailRepository extends \In2code\Powermail\Domain\Repository\MailRepository
      * @param int $pid
      * @param array $settings TypoScript Config Array
      * @param array $piVars Plugin Variables
-     * @return QueryResult
+     * @return array
      */
-    public function findAllInPidRaw($pid = 0, $settings = [], $piVars = [])
+    public function findAllInPidRaw(int $pid = 0, array $settings = [], array $piVars = []): array
     {
         $query = $this->createQuery();
         $query->getQuerySettings()->setIgnoreEnableFields(true);

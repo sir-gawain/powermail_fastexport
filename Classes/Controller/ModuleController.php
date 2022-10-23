@@ -6,6 +6,7 @@ use Bithost\PowermailFastexport\Domain\Repository\AnswerRepository;
 use Bithost\PowermailFastexport\Domain\Repository\MailRepository;
 use Bithost\PowermailFastexport\Exporter\CsvExporter;
 use Bithost\PowermailFastexport\Exporter\XlsExporter;
+use Psr\Http\Message\ResponseInterface;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use In2code\Powermail\Utility\StringUtility;
 use TYPO3\CMS\Fluid\Core\Rendering\RenderingContext;
@@ -41,17 +42,19 @@ use TYPO3\CMS\Fluid\Core\Rendering\RenderingContext;
  */
 class ModuleController extends \In2code\Powermail\Controller\ModuleController
 {
+    public function __construct()
+    {
+        $this->renderingContext = GeneralUtility::makeInstance(RenderingContext::class);
+    }
+
     /**
      * Export Action for XLS Files
-     *
-     * @return String
      */
-    public function exportXlsAction(): void
+    public function exportXlsAction(): ResponseInterface
     {
-
         $mails = $this->getMailsAsArray();
-        /** @var \Bithost\PowermailFastexport\Exporter\XlsExporter $xlsExporter */
-        $xlsExporter = GeneralUtility::makeInstance(XlsExporter::class, $this->objectManager, new RenderingContext());
+        /** @var XlsExporter $xlsExporter */
+        $xlsExporter = GeneralUtility::makeInstance(XlsExporter::class, $this->objectManager, $this->renderingContext);
         $fieldUids = GeneralUtility::trimExplode(
             ',',
             StringUtility::conditionalVariable($this->piVars['export']['fields'], ''),
@@ -59,11 +62,7 @@ class ModuleController extends \In2code\Powermail\Controller\ModuleController
         );
         $fileName = StringUtility::conditionalVariable($this->settings['export']['filenameXls'], 'export.xls');
 
-        header('Content-Type: application/vnd.ms-excel');
-        header('Content-Disposition: inline; filename="' . $fileName . '"');
-        header('Pragma: no-cache');
-
-        $this->response->appendContent($xlsExporter->export($mails, $fieldUids));
+        return $this->exportResponse('application/vnd.ms-excel;', $fileName, $xlsExporter->export($mails, $fieldUids));
     }
 
     /**
@@ -71,7 +70,7 @@ class ModuleController extends \In2code\Powermail\Controller\ModuleController
      *
      * @return array
      */
-    private function getMailsAsArray()
+    private function getMailsAsArray(): array
     {
         if (!empty($this->settings['maxExecutionTime'])) {
             ini_set('max_execution_time', (int)$this->settings['maxExecutionTime']);
@@ -81,7 +80,7 @@ class ModuleController extends \In2code\Powermail\Controller\ModuleController
         }
 
         /** @var MailRepository $mailRepository */
-        $mailRepository = $this->objectManager->get(MailRepository::class);
+        $mailRepository = GeneralUtility::makeInstance(MailRepository::class);
         $dbMails = $mailRepository->findAllInPidRaw($this->id, $this->settings, $this->piVars);
         $mails = [];
 
@@ -90,7 +89,7 @@ class ModuleController extends \In2code\Powermail\Controller\ModuleController
         }
 
         /** @var AnswerRepository $answerRepository */
-        $answerRepository = $this->objectManager->get(AnswerRepository::class);
+        $answerRepository = GeneralUtility::makeInstance(AnswerRepository::class);
         $answers = $answerRepository->findByMailUidsRaw(array_keys($mails));
 
         foreach ($answers as $answer) {
@@ -106,13 +105,13 @@ class ModuleController extends \In2code\Powermail\Controller\ModuleController
     /**
      * Export Action for CSV Files
      *
-     * @return String
+     * @return ResponseInterface
      */
-    public function exportCsvAction(): void
+    public function exportCsvAction(): ResponseInterface
     {
         $mails = $this->getMailsAsArray();
-        /** @var \Bithost\PowermailFastexport\Exporter\CsvExporter $csvExporter */
-        $csvExporter = GeneralUtility::makeInstance(CsvExporter::class, $this->objectManager, new RenderingContext());
+        /** @var CsvExporter $csvExporter */
+        $csvExporter = GeneralUtility::makeInstance(CsvExporter::class, $this->objectManager, $this->renderingContext);
         $fieldUids = GeneralUtility::trimExplode(
             ',',
             StringUtility::conditionalVariable($this->piVars['export']['fields'], ''),
@@ -120,11 +119,15 @@ class ModuleController extends \In2code\Powermail\Controller\ModuleController
         );
         $fileName = StringUtility::conditionalVariable($this->settings['export']['filenameCsv'], 'export.csv');
 
-        header('Content-Type: text/x-csv');
-        header('Content-Disposition: attachment; filename="' . $fileName . '"');
-        header('Pragma: no-cache');
-
-        $this->response->appendContent($csvExporter->export($mails, $fieldUids));
+        return $this->exportResponse('text/x-csv', $fileName, $csvExporter->export($mails, $fieldUids));
     }
 
+    private function exportResponse(string $type, string $fileName, $body): ResponseInterface
+    {
+        return $this->responseFactory->createResponse()
+            ->withHeader('Content-Type', $type . 'charset=utf-8')
+            ->withAddedHeader('Content-Disposition', 'inline; filename="' . $fileName . '"')
+            ->withAddedHeader('Pragma', 'no-cache')
+            ->withBody($this->streamFactory->createStream($body));
+    }
 }

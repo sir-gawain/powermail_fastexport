@@ -43,7 +43,7 @@ class CsvExporter extends AbstractExporter
      *
      * @return string
      */
-    public function export(array &$mails, array $fieldUids)
+    public function export(array &$mails, array $fieldUids): string
     {
         $output = '';
 
@@ -61,9 +61,9 @@ class CsvExporter extends AbstractExporter
      * @param array $fieldUids
      * @return array
      */
-    protected function renderRecord(array &$mail, array $fieldUids)
+    protected function renderRecord(array &$mail, array $fieldUids): array
     {
-        $data = array();
+        $data = [];
 
         foreach ($fieldUids as $fieldUid) {
             $data[] = $this->renderRecordFieldContent($mail, $fieldUid);
@@ -77,9 +77,9 @@ class CsvExporter extends AbstractExporter
      *
      * @param array $fieldUids
      *
-     * @return string
+     * @return array
      */
-    protected function renderHeader(array $fieldUids)
+    protected function renderHeader(array $fieldUids): array
     {
         $data = array();
 
@@ -107,12 +107,9 @@ class CsvExporter extends AbstractExporter
      *
      * @return string
      */
-    static function rowArrayToCsv(array $row, $columnSeparator = ",", $quote = '"', $rowSeparator = "\n")
+    public static function rowArrayToCsv(array $row, string $columnSeparator = ",", string $quote = '"', string $rowSeparator = "\n")
     {
         $output = '';
-        if (!is_array($row)) {
-            return false;
-        }
 
         $tmp = '';
         $i = 0;

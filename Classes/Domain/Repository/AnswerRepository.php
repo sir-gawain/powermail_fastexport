@@ -2,6 +2,7 @@
 
 namespace Bithost\PowermailFastexport\Domain\Repository;
 
+use TYPO3\CMS\Extbase\Object\ObjectManagerInterface;
 use In2code\Powermail\Domain\Model\Answer;
 
 /***
@@ -37,7 +38,7 @@ class AnswerRepository extends \In2code\Powermail\Domain\Repository\AnswerReposi
      *
      * @param \TYPO3\CMS\Extbase\Object\ObjectManagerInterface $objectManager
      */
-    public function __construct(\TYPO3\CMS\Extbase\Object\ObjectManagerInterface $objectManager)
+    public function __construct(ObjectManagerInterface $objectManager)
     {
         parent::__construct($objectManager);
         $this->objectType = Answer::class;
