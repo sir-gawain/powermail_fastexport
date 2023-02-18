@@ -88,6 +88,10 @@ abstract class AbstractExporter
 		$this->getFieldLabelFromUid = $this->objectManager->get(GetFieldLabelFromUidViewHelper::class);
 		$this->getPageNamerFromUid = $this->objectManager->get(GetPageNameFromUidViewHelper::class);
 		$this->variableInVariable = GeneralUtility::makeInstance(VariableInVariableViewHelper::class);
+
+		// Proper initialization of the VHs.
+		$this->isDateTimeVariableInVariable->setRenderingContext($this->renderingContext);
+		$this->variableInVariable->setRenderingContext($this->renderingContext);
 	}
 
 	/**
