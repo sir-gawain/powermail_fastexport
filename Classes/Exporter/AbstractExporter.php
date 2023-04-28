@@ -5,7 +5,6 @@ namespace Bithost\PowermailFastexport\Exporter;
 use DateTime;
 use In2code\Powermail\Domain\Model\Answer;
 use In2code\Powermail\Utility\ArrayUtility;
-use In2code\Powermail\ViewHelpers\Condition\IsDateTimeVariableInVariableViewHelper;
 use In2code\Powermail\ViewHelpers\Getter\GetFieldLabelFromUidViewHelper;
 use In2code\Powermail\ViewHelpers\Getter\GetPageNameFromUidViewHelper;
 use In2code\Powermail\ViewHelpers\Misc\VariableInVariableViewHelper;
@@ -43,16 +42,6 @@ use TYPO3Fluid\Fluid\Core\Rendering\RenderingContext;
 abstract class AbstractExporter
 {
 	/**
-	 * @var IsDateTimeVariableInVariableViewHelper
-	 */
-	protected $isDateTimeVariableInVariable = null;
-
-	/**
-	 * @var DateViewHelper
-	 */
-	protected $date = null;
-
-	/**
 	 * @var GetFieldLabelFromUidViewHelper
 	 */
 	protected $getFieldLabelFromUid = null;
@@ -84,15 +73,9 @@ abstract class AbstractExporter
 	{
 		$this->objectManager = $objectManager;
 		$this->renderingContext = $renderingContext;
-		$this->isDateTimeVariableInVariable = GeneralUtility::makeInstance(IsDateTimeVariableInVariableViewHelper::class);
-		$this->date = GeneralUtility::makeInstance(DateViewHelper::class);
 		$this->getFieldLabelFromUid = $this->objectManager->get(GetFieldLabelFromUidViewHelper::class);
 		$this->getPageNamerFromUid = $this->objectManager->get(GetPageNameFromUidViewHelper::class);
 		$this->variableInVariable = GeneralUtility::makeInstance(VariableInVariableViewHelper::class);
-
-		// Proper initialization of the VHs.
-		$this->isDateTimeVariableInVariable->setRenderingContext($this->renderingContext);
-		$this->variableInVariable->setRenderingContext($this->renderingContext);
 	}
 
 	/**
