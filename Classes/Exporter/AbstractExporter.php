@@ -1,6 +1,8 @@
 <?php
+
 namespace Bithost\PowermailFastexport\Exporter;
 
+use DateTime;
 use In2code\Powermail\Domain\Model\Answer;
 use In2code\Powermail\Utility\ArrayUtility;
 use In2code\Powermail\ViewHelpers\Condition\IsDateTimeVariableInVariableViewHelper;
@@ -38,7 +40,6 @@ use TYPO3Fluid\Fluid\Core\Rendering\RenderingContext;
  *
  *  This copyright notice MUST APPEAR in all copies of the script!
  ***/
-
 abstract class AbstractExporter
 {
 	/**
@@ -146,41 +147,28 @@ abstract class AbstractExporter
 				}
 			}
 		} else {
-            $this->isDateTimeVariableInVariable->setArguments(['obj' => $mail, 'prop' => $fieldUid]);
-			if ($this->isDateTimeVariableInVariable->render()) {
+            if (in_array($fieldUid, ['crdate', 'time', 'tstsamp'])) {
+                $datetime = new DateTime();
+                $datetime->setTimestamp($mail[$fieldUid]);
+                $result .= $datetime->format('d.m.Y H:i:s');
+                $result .= ' ' . $this->translate('Clock');
+            } elseif ($fieldUid === 'marketing_page_funnel') {
                 $this->variableInVariable->setArguments(['obj' => $mail, 'prop' => $fieldUid]);
-				if ($fieldUid === 'crdate') {
-				    $this->date->setArguments(['date' => $this->variableInVariable->render(), 'format' => 'd.m.Y H:i:s']);
-					$result .= $this->date->render();
-					$result .= $this->translate('Clock');
-				} else {
-					if ($fieldUid === 'time') {
-                        $this->date->setArguments(['date' => $this->variableInVariable->render(), 'format' => '%M:%S']);
-						$result .= $this->date->render();
-					} else {
-                        $this->date->setArguments(['date' => $this->variableInVariable->render(), 'format' => 'H:i:s']);
-						$result .= $this->date->render();
-					}
-				}
-			} else {
-				if ($fieldUid === 'marketing_page_funnel') {
-                    $this->variableInVariable->setArguments(['obj' => $mail, 'prop' => $fieldUid]);
-					if (is_array($this->variableInVariable->render())) {
-						$i = 0;
-						$length = count($this->variableInVariable->render());
-						foreach ($this->variableInVariable->render() as $pid) {
-							$this->getPageNameFromUid->setArguments(['uid' => $pid]);
-							$result .= $this->getPageNameFromUid->render();
-							if ($i !== $length - 1) {
-								$result .= '&gt;';
-							}
-						}
-					}
-				} else {
-                    $this->variableInVariable->setArguments(['obj' => $mail, 'prop' => $fieldUid]);
-					$result .= $this->variableInVariable->render();
-				}
-			}
+                if (is_array($this->variableInVariable->render())) {
+                    $i = 0;
+                    $length = count($this->variableInVariable->render());
+                    foreach ($this->variableInVariable->render() as $pid) {
+                        $this->getPageNameFromUid->setArguments(['uid' => $pid]);
+                        $result .= $this->getPageNameFromUid->render();
+                        if ($i !== $length - 1) {
+                            $result .= '&gt;';
+                        }
+                    }
+                }
+            } else {
+                $this->variableInVariable->setArguments(['obj' => $mail, 'prop' => $fieldUid]);
+                $result .= $this->variableInVariable->render();
+            }
 		}
 
 		return $result;
