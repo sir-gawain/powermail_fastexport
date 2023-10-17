@@ -173,6 +173,12 @@ abstract class AbstractExporter
 			$value = (empty($value) ? array() : array((string)$value));
 		}
 
+		if ($answer['value_type'] === 2) {
+			$datetime = new DateTime();
+			$datetime->setTimestamp($value);
+			$value = $datetime->format('d.m.Y H:i:s');
+		}
+
 		return $value;
 	}
 }
